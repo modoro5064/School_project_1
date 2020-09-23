@@ -53,7 +53,7 @@
     </option>
   </component>
   <component name="Git.Settings">
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/School_project_1" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="ProjectId" id="1aqs4AYXFFiV044J9qxtFkocPaq" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
@@ -295,7 +295,7 @@
       <screen x="0" y="0" width="1411" height="829" />
     </state>
     <state x="93" y="93" width="1225" height="643" key="com.android.tools.idea.avdmanager.AvdListDialog/0.0.1411.829@0.0.1411.829" timestamp="1593248753871" />
-    <state x="283" y="156" key="com.intellij.ide.util.TipDialog" timestamp="1600871614355">
+    <state x="283" y="156" key="com.intellij.ide.util.TipDialog" timestamp="1600873051478">
       <screen x="0" y="0" width="1474" height="864" />
     </state>
     <state x="263" y="132" key="com.intellij.ide.util.TipDialog/0.0.1366.728@0.0.1366.728" timestamp="1593158381234" />
@@ -305,7 +305,7 @@
     <state x="272" y="150" key="com.intellij.ide.util.TipDialog/0.0.1411.829@0.0.1411.829" timestamp="1593327120490" />
     <state x="283" y="156" key="com.intellij.ide.util.TipDialog/0.0.1472.864@0.0.1472.864" timestamp="1598780140275" />
     <state x="283" y="156" key="com.intellij.ide.util.TipDialog/0.0.1473.864@0.0.1473.864" timestamp="1600176669390" />
-    <state x="283" y="156" key="com.intellij.ide.util.TipDialog/0.0.1474.864@0.0.1474.864" timestamp="1600871614355" />
+    <state x="283" y="156" key="com.intellij.ide.util.TipDialog/0.0.1474.864@0.0.1474.864" timestamp="1600873051478" />
     <state x="370" y="188" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1920.1040@0.0.1920.1040" timestamp="1592993526963" />
     <state x="2290" y="188" key="com.intellij.ide.util.TipDialog/0.0.1920.1040/1920.0.1920.1040@1920.0.1920.1040" timestamp="1592984747542" />
     <state x="370" y="188" key="com.intellij.ide.util.TipDialog/1920.0.1920.1040/0.0.1920.1040@0.0.1920.1040" timestamp="1592831809219" />
