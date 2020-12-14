@@ -3,15 +3,19 @@ package com.mitlab.zusliu.User.Interface;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
@@ -48,7 +52,10 @@ public class Floor_choosen extends Activity {
 
     static String [] web_info     = {"1","2","3","4","5","6","7","8","9","10","11"};
     static int poumadon = 0;
+    static Spinner spinner;
 
+    public static int gps;
+    public static int gps_position;
 
 
     ///////////////////////////////////////////////////////////////////////////////////旗標
@@ -65,6 +72,7 @@ public class Floor_choosen extends Activity {
     static int beacon_amount_f1 = 6;
     public static int user_place = 100;
     static int beacon_num = 100;
+    public int first_time=1;
     ///////////////////////////////////////////////////////////////////////////////////側滑選單內容物件
     public ToggleButton toggle_btn_1,toggle_btn_2;  //側滑選單 樓層選取
     public LinearLayout side_layout_1;     //sidebar linear_layout
@@ -87,7 +95,7 @@ public class Floor_choosen extends Activity {
 
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setTitle("Floor 2");
+        setTitle("Floor 2nd");
         setContentView(R.layout.floor_1);   //設定layout檔
 
         ///////////////////////////////////////////////////////////////////////////////////
@@ -100,7 +108,8 @@ public class Floor_choosen extends Activity {
 
         mark_state = new TextView(this);        //跑馬燈字樣
         frame_2.addView(mark_state);
-        mark_state.setTextColor(getResources().getColor(android.R.color.holo_blue_light));
+        //mark_state.setTextColor(getResources().getColor(android.R.color.holo_blue_light));
+        mark_state.setTextColor(Color.rgb(200,240, 230));
 
         btn_1 = (Button)findViewById(R.id.button3);
         btn_2 = (Button)findViewById(R.id.button4);
@@ -113,9 +122,14 @@ public class Floor_choosen extends Activity {
         mark_state.setTextSize(50);
 
 
-        user_place = MainActivity.user_place;
+        user_place  = MainActivity.user_place;
+        gps         = MainActivity.gps;
+        gps_position= MainActivity.gps_position;
+        //if(user_place > 10)Toast.makeText(Floor_choosen.this, "userplace == " + (user_place - 11), Toast.LENGTH_SHORT).show();
+        //if(user_place > 10)main.change_mark(user_place - 11,1,img_btn_mark);
 
-        Toast.makeText(this,String.valueOf(user_place) , Toast.LENGTH_LONG).show();
+
+        //Toast.makeText(this,"近來oncreat ", Toast.LENGTH_LONG).show();
         ///////////////////////////////////////////////////////////跑馬燈效果
         mark_state.setEllipsize(TextUtils.TruncateAt.MARQUEE);
         mark_state.setSingleLine(true);
@@ -125,7 +139,11 @@ public class Floor_choosen extends Activity {
 
         MainActivity.getInstance().display_mark_btn(beacon_amount_f1,mark_position_X,mark_position_Y,img_btn_mark,frame_1,this);   //創建地標圖示
 
-
+        spinner = (Spinner)findViewById(R.id.spinner1);
+        final String[] lunch = {"Select","Nike", "Adidas", "Puma", "NTUST", "APPLE","COSTCO","康是美","uniqlo","PChome","shopee","遠傳","床的世界","定食8","百分百文具店","小米電器","王品牛排","萵苣健身房"};
+        ArrayAdapter<String> lunchList = new ArrayAdapter<>(Floor_choosen.this,
+                android.R.layout.simple_spinner_dropdown_item,
+                lunch);spinner.setAdapter(lunchList);
         ///////////////////////////////////////////////////////////設定timer任務
         task = new TimerTask() {
             @Override
@@ -163,7 +181,7 @@ public class Floor_choosen extends Activity {
                 if (toggle_btn_1.isChecked()) {
                     main.my_floor = 1;
                     toggle_btn_2.setChecked(false);
-                    Toast.makeText(Floor_choosen.this, "選擇樓層1", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(Floor_choosen.this, "選擇樓層1", Toast.LENGTH_SHORT).show();
                     ///////////////////////////////////////////////////////////////////////////////////切換頁面
                     Intent intent_1 = new Intent();
                     intent_1.setClass(Floor_choosen.this, MainActivity.class);
@@ -172,7 +190,7 @@ public class Floor_choosen extends Activity {
                 }
                 // 當按鈕再次被點擊時候響應的事件
                 else {
-                    Toast.makeText(Floor_choosen.this, "已選擇樓層1", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(Floor_choosen.this, "已選擇樓層1", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -182,33 +200,196 @@ public class Floor_choosen extends Activity {
                 // 當按鈕第一次被點擊時候響應的事件
                 if (toggle_btn_2.isChecked()) {
                     toggle_btn_1.setChecked(false);
-                    Toast.makeText(Floor_choosen.this, "選擇樓層2", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(Floor_choosen.this, "選擇樓層2", Toast.LENGTH_SHORT).show();
                     main.my_floor = 2;
                 }
                 // 當按鈕再次被點擊時候響應的事件
                 else {
                     toggle_btn_2.setChecked(true);
-                    Toast.makeText(Floor_choosen.this, "已選擇樓層2", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(Floor_choosen.this, "已選擇樓層2", Toast.LENGTH_SHORT).show();
                 }
             }
         });
         ///////////////////////////////////////////////////////////////////////////////////
 
-        Log.v("2low", String.valueOf(beacon_num));//跑馬燈更新
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                //Toast.makeText(Floor_choosen.this, "近來:" + lunch[position], Toast.LENGTH_SHORT).show();
+                if(user_place<20 && position>0) {
+                    gps=1;
+                    gps_position=position;
+                    MainActivity.gps=1;
+                    MainActivity.gps_position=gps_position;
+                    //圖標重製
+                    for(int i = 0;i < beacon_amount_f1;i++) {
+                        if (flag_mark_btn[i] == true && flag_mark_btn2[i] == true) {
+                            main.change_mark(i,2,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == true && flag_mark_btn2[i] == false){
+                            main.change_mark(i,1,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == false && flag_mark_btn2[i] == true){
+                            main.change_mark(i,3,img_btn_mark);
+                        }
+                        else {
+                            main.change_mark(i, 0,img_btn_mark);
+                        }
+                    }
+                    //確保user_place
+                    if(user_place>10)main.change_mark(user_place-11,1,img_btn_mark);
+                    //畫路徑
+                    if (user_place < (position - 1) && user_place>10 && position>11) {    //user_place在2樓 目的地也在2樓
+                        if(position!=17) {
+                            for (int i = user_place + 1; i < position - 1; i++) {
+                                main.change_mark(i-11, 3, img_btn_mark);
+                            }
+                            main.change_mark(position - 12, 4, img_btn_mark);
+                            main.change_mark(user_place-11, 1, img_btn_mark);
+                        }
+                        else{
+                            if(user_place<14){
+                                for (int i = 11; i < user_place; i++) {
+                                    main.change_mark(i-11, 3, img_btn_mark);
+                                }
+                            }
+                            else{
+                                for (int i = 15; i > user_place; i--) {
+                                    main.change_mark(i-11, 3, img_btn_mark);
+                                }
+                            }
+                            main.change_mark(position - 12, 4, img_btn_mark);
+                            main.change_mark(user_place-11, 1, img_btn_mark);
+                        }
+                    }
+                    else if (user_place > (position - 1)  && user_place>10 && position>11) { //user_place在2樓 目的地也在2樓
+                        if(user_place!=17) {
+                            for (int i = user_place ; i > position - 1; i--) {
+                                main.change_mark(i-11, 3, img_btn_mark);
+                            }
+                            main.change_mark(position - 12, 4, img_btn_mark);
+                            main.change_mark(user_place-11, 1, img_btn_mark);
+                        }
+                        else{
+                            if(position<15){
+                                for (int i = 11; i < position-1; i++) {
+                                    main.change_mark(i-11, 3, img_btn_mark);
+                                }
+                            }
+                            else{
+                                for (int i = 15; i > position-1; i--) {
+                                    main.change_mark(i-11, 3, img_btn_mark);
+                                }
+                            }
+                            main.change_mark(position - 12, 4, img_btn_mark);
+                            main.change_mark(user_place-11, 1, img_btn_mark);
+                        }
+                    }
+                    else if(user_place == (position - 1)  && user_place>10 && position>11){
+                        Toast.makeText(Floor_choosen.this, "您已在" + lunch[position], Toast.LENGTH_SHORT).show();
+                    }
+                    else{
+                    }
+                }
+                if(position<12 && user_place>10){  //user_place在2樓 目的地在1樓
+                    if(user_place==16){
+                        //往樓梯的圖,從窩俊到樓梯
+                    }
+                    else{
+                        for (int i = 0; i < user_place-11; i++) {
+                            main.change_mark(i, 3, img_btn_mark);
+                        }
+                        main.change_mark(user_place-11, 1, img_btn_mark);
+                    }
+                    Toast.makeText(Floor_choosen.this, "請往樓梯走" , Toast.LENGTH_SHORT).show();
 
+                }
+                else if(position>=12 && user_place<=10){  //user_place在1樓 目的地在2樓
+                    if(position==17){
+                        Toast.makeText(Floor_choosen.this, "出樓梯請往右邊走" , Toast.LENGTH_SHORT).show();
+                        main.change_mark(position-12, 4, img_btn_mark);
+                        //可以的話 家樓梯到萵苣的圖
+                    }
+                    else{
+                        for (int i = 0; i < position-12; i++) {
+                            main.change_mark(i, 3, img_btn_mark);
+                        }
+                        main.change_mark(position-12, 4, img_btn_mark);
+                        Toast.makeText(Floor_choosen.this, "出樓梯請往左邊走" , Toast.LENGTH_SHORT).show();
+                    }
+                    //Toast.makeText(MainActivity.this, "請往樓梯走" , Toast.LENGTH_SHORT).show();
+
+                }
+                else if(user_place<20 && position==0){
+                    if(first_time==0){
+                        gps=0;
+                        gps_position=20;
+                        MainActivity.gps=0;
+                        MainActivity.gps_position=gps_position;
+                        for(int i = 0;i < beacon_amount_f1;i++) {
+                            if (flag_mark_btn[i] == true && flag_mark_btn2[i] == true) {
+                                main.change_mark(i,2,img_btn_mark);
+                            }
+                            else if(flag_mark_btn[i] == true && flag_mark_btn2[i] == false){
+                                main.change_mark(i,1,img_btn_mark);
+                            }
+                            else if(flag_mark_btn[i] == false && flag_mark_btn2[i] == true){
+                                main.change_mark(i,3,img_btn_mark);
+                            }
+                            else {
+                                main.change_mark(i, 0,img_btn_mark);
+                            }
+                        }
+                    }
+                    else{
+                        first_time=0;
+                        /*if(gps==1)*/first_initial();
+                        //MainActivity.change_mark(user_place, 1, img_btn_mark);
+                    }
+                }
+
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
     }
 
 
     public void background(){
         if(user_place < 17){  //比100小
-            if(user_place != MainActivity.user_place){
-                if(user_place >= 11) {
-                    if(flag_mark_btn2[user_place - 11] == false && flag_mark_btn3[user_place - 11] == false)main.change_mark(user_place-11 ,0,img_btn_mark);
-                    flag_mark_btn[user_place-11] = false;
+            if(user_place != MainActivity.user_place){  //位置改變
+                if(user_place >= 11) {  //原本在2樓
+                    if(flag_mark_btn2[user_place - 11] == false && flag_mark_btn3[user_place - 11] == false){
+                        if(gps==1){
+                            change_mark_gps(MainActivity.user_place);
+                            flag_mark_btn[user_place-11] = false;
+                        }
+                        else {
+                            //main.change_mark(user_place-11 ,0,img_btn_mark);
+                            main.change_mark(user_place-11 ,0,img_btn_mark);
+                            user_place = MainActivity.user_place;
+                            if(user_place>=11)main.change_mark(user_place-11 ,1,img_btn_mark);
+                        }
+                    }
+
                     Log.v("floor1","1");
                 }
-                user_place = MainActivity.user_place;
-                if(user_place >= 11){
+                else{      //原本在1樓 目的地在2樓
+                    if(gps==1 && gps_position>11 && gps_position<18){
+                        if(user_place>5 && user_place>MainActivity.user_place){ //走反了
+                            //Toast.makeText(Floor_choosen.this, "您走反了4", Toast.LENGTH_SHORT).show();
+                        }
+                        else if(user_place<6 && user_place<MainActivity.user_place) { //走反了
+                            //Toast.makeText(Floor_choosen.this, "您走反了4", Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                    else{
+                    }
+                }
+                /*user_place = MainActivity.user_place;
+                gps         = MainActivity.gps;
+                gps_position= MainActivity.gps_position;*/
+                if(user_place >= 11){  //後來在2樓
                     if(flag_mark_btn2[user_place - 11] == false && flag_mark_btn3[user_place - 11] == false)main.change_mark(user_place-11 ,1,img_btn_mark);
                     flag_mark_btn[user_place-11] = true;
                     poumadon = 0;   //跑跑馬燈
@@ -232,6 +413,12 @@ public class Floor_choosen extends Activity {
                 poumadon = 0;   //跑跑馬燈
             }
         }
+        user_place = MainActivity.user_place;
+        gps         = MainActivity.gps;
+        gps_position= MainActivity.gps_position;
+        Log.v("value", String.valueOf(user_place));//跑馬燈更新
+        Log.v("value", String.valueOf(gps));//跑馬燈更新
+        Log.v("value", String.valueOf(gps_position));//跑馬燈更新
         //user_place = MainActivity.user_place;
         Log.v("floor14", String.valueOf(poumadon));//跑馬燈更新
         Log.v("TAG___","處理器執行");
@@ -247,7 +434,7 @@ public class Floor_choosen extends Activity {
             btn_1_flag = !btn_1_flag;
             if(btn_1_flag == true){
                 btn_1.setVisibility(View.VISIBLE);
-                btn_2.setVisibility(View.VISIBLE);
+                //btn_2.setVisibility(View.VISIBLE);
                 btn_3.setVisibility(View.VISIBLE);
             }else{
                 btn_1.setVisibility(View.INVISIBLE);
@@ -353,7 +540,7 @@ public class Floor_choosen extends Activity {
                         flag_2[a] = true;
                         //change_mark(a,3,mark);
                         MainActivity.getInstance().change_mark(a,3,mark);
-                        Toast.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
+                        //.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
                     }
                     else{
                         MainActivity.getInstance().change_mark(a+11,0,mark);
@@ -396,7 +583,7 @@ public class Floor_choosen extends Activity {
                         flag_3[a] = true;
                         MainActivity.getInstance().change_mark(a,4,mark);
                         //change_mark(a,4,mark);
-                        Toast.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
                     }else{
                         for(int i = 0;i < beacon_amount_f1;i++) {
                             flag_3[i]=false;
@@ -416,7 +603,7 @@ public class Floor_choosen extends Activity {
                         }
                     }
                 }else if(!btn_2_flag && !btn_3_flag){
-                    Toast.makeText(context,"number ==== " + a, Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(context,"number ==== " + a, Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -492,4 +679,170 @@ public class Floor_choosen extends Activity {
             });
         }
     };
+
+
+
+    public void first_initial(){
+        if(user_place<20 && gps_position>0 && gps==1) {
+            //畫路徑
+            if (user_place < (gps_position - 1) && user_place>10 && gps_position>11) {    //user_place在2樓 目的地也在2樓
+                if(gps_position!=17) {
+                    for (int i = user_place + 1; i < gps_position - 1; i++) {
+                        main.change_mark(i-11, 3, img_btn_mark);
+                    }
+                    main.change_mark(gps_position - 12, 4, img_btn_mark);
+                    main.change_mark(user_place-11, 1, img_btn_mark);
+                }
+                else{
+                    if(user_place<14){
+                        for (int i = 11; i < user_place; i++) {
+                            main.change_mark(i-11, 3, img_btn_mark);
+                        }
+                    }
+                    else{
+                        for (int i = 15; i > user_place; i--) {
+                            main.change_mark(i-11, 3, img_btn_mark);
+                        }
+                    }
+                    main.change_mark(gps_position - 12, 4, img_btn_mark);
+                    main.change_mark(user_place-11, 1, img_btn_mark);
+                }
+            }
+            else if (user_place > (gps_position - 1)  && user_place>10 && gps_position>11) { //user_place在2樓 目的地也在2樓
+                if(user_place!=17) {
+                    for (int i = user_place ; i > gps_position - 1; i--) {
+                        main.change_mark(i-11, 3, img_btn_mark);
+                    }
+                    main.change_mark(gps_position - 12, 4, img_btn_mark);
+                    main.change_mark(user_place-11, 1, img_btn_mark);
+                }
+                else{
+                    if(gps_position<15){
+                        for (int i = 11; i < gps_position-1; i++) {
+                            main.change_mark(i-11, 3, img_btn_mark);
+                        }
+                    }
+                    else{
+                        for (int i = 15; i > gps_position-1; i--) {
+                            main.change_mark(i-11, 3, img_btn_mark);
+                        }
+                    }
+                    main.change_mark(gps_position - 12, 4, img_btn_mark);
+                    main.change_mark(user_place-11, 1, img_btn_mark);
+                }
+            }
+            else{
+            }
+        }
+        if(gps_position<12 && user_place>10 && gps==1){  //user_place在2樓 目的地在1樓
+            if(user_place==16){
+                //往樓梯的圖,從窩俊到樓梯
+            }
+            else{
+                for (int i = 0; i < user_place-11; i++) {
+                    main.change_mark(i, 3, img_btn_mark);
+                }
+                main.change_mark(user_place-11, 1, img_btn_mark);
+            }
+            //Toast.makeText(MainActivity.this, "請往樓梯走" , Toast.LENGTH_SHORT).show();
+            //*********************
+            //請恆少畫圖,往樓梯的圖
+            //*********************
+        }
+        else if(gps_position<20 && gps_position>=12 && user_place<=10 && gps==1){  //user_place在1樓 目的地在2樓
+            if(gps_position==17){
+                Toast.makeText(Floor_choosen.this, "出樓梯請往右邊走" , Toast.LENGTH_SHORT).show();
+                main.change_mark(gps_position-12, 4, img_btn_mark);
+                //可以的話 家樓梯到萵苣的圖
+            }
+            else{
+                for (int i = 0; i < gps_position-12; i++) {
+                    main.change_mark(i, 3, img_btn_mark);
+                }
+                main.change_mark(gps_position-12, 4, img_btn_mark);
+                Toast.makeText(Floor_choosen.this, "出樓梯請往左邊走" , Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+
+    public void change_mark_gps(int new_user_place){   //原本就在2樓
+        if (  gps_position>11 && gps_position<17  && user_place>11 && user_place<17) {  //目的地跟位置在上排
+            //
+            if( user_place > (gps_position - 1)  ){
+                if( user_place < new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    main.change_mark(user_place-11, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    main.change_mark(user_place-11, 0,img_btn_mark);
+                }
+            }
+            //
+            else if (  user_place < (gps_position - 1)  ) {
+                if( user_place > new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    main.change_mark(user_place-11, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    main.change_mark(user_place-11, 0,img_btn_mark);
+                }
+            }
+            else {
+            }
+        }
+        else if (  gps_position==17 ) {  //目的地跟位置在上下排
+            //
+            if( user_place < 14 ){
+                if( user_place < new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    main.change_mark(user_place-11, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    main.change_mark(user_place-11, 0,img_btn_mark);
+                }
+            }
+            //
+            else if (  user_place > 13  ) {
+                if( user_place > new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    main.change_mark(user_place-11, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    main.change_mark(user_place-11, 0,img_btn_mark);
+                }
+            }
+            else {
+            }
+        }
+        else if (  user_place==17 ) {  //目的地跟位置在上下排
+            //
+            if( gps_position < 14 ){
+                if( user_place < new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    main.change_mark(user_place-11, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    main.change_mark(user_place-11, 0,img_btn_mark);
+                }
+            }
+            //
+            else if (  gps_position > 13  ) {
+                if(  new_user_place  <12){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    main.change_mark(user_place-11, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    main.change_mark(user_place-11, 0,img_btn_mark);
+
+                }
+            }
+            else {
+            }
+        }
+        else {  //本來就在目的地
+            gps=0;
+            gps_position=20;
+        }
+    }
 }

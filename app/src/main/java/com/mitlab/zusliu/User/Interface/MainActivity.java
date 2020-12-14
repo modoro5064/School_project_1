@@ -38,6 +38,8 @@ import android.os.Message;
 import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
@@ -61,6 +63,7 @@ import system.config.Setup;
 
 //////////////////////////////////
 import android.view.ViewGroup.LayoutParams;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -116,6 +119,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
 
     public ImageButton [] img_btn_mark = new ImageButton[15];   //地標按鍵
     public static TextView mark_state;
+    public static ImageView pointer;
 
     static boolean btn_1_flag = false;  //"+"按鍵狀態
     static boolean btn_2_flag = false;  //地點標記按鍵狀態
@@ -126,7 +130,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
     static boolean [] flag_mark_btn3 = {false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false,false};  //網站導覽狀態
     // 儲存地標位置
     /////////////////////////////////0   1   2   3   4   5   6   7   8   9   10
-    static int [] mark_position_X = {  5,130,270,410,550,560, 5,130,270,410,550};
+    static int [] mark_position_X = {  5,130,270,410,550,560,550,410,270,130,  5};
     static int [] mark_position_Y = {100,100,100,100,100,200,350,350,350,350,350};
     static int [] beacon_num      = {  5, 81, 30, 41, 42, 43, 82,  6, 91, 92, 93,  3,773,772,  1,  771,  2};//第一根最後對調過 10不要
     static int [] img_btn_state   = {  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0};
@@ -138,14 +142,18 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
     static int my_floor = 1;
     static int beacon_in  = 0;
     static int poumadon = 0;
-    public static int user_place = 100;
+    //public static int user_place = 100;
+    public static int user_place = 0;
     public static int beacon_amount_total = 17; //12
     static int beacon_amount = 11;
     static String result = "";
+    public static int gps=0;
+    public static int gps_position=20;
     Timer timer = new Timer();;    //宣告一個時間函示
-
+    public int first_time=1;
     static String mark_state_text = "";
 
+    static Spinner spinner;
     Intent intent_1 = new Intent(); //要傳往floor_1的intent
 
     private static MainActivity instance;///////////////////////////////////////////////////////////
@@ -159,7 +167,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
         final DrawView view=new DrawView(this);
         view.setMinimumHeight(500);
         view.setMinimumWidth(300);
-        setTitle("Floor 1");
+        setTitle("Floor 1st");
         // Step.01(初始化流程) 取得人機介面物件
         this.l = (ListView) findViewById(R.id.myListView);
         // Step.02(初始化流程) 取得裝置掃描管理器(iBeaconScanManager)物件
@@ -180,7 +188,16 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
         this.handler.sendEmptyMessageDelayed(Setup.REQ_UPDATE_BEACON, Setup.TIME_BEACON_UPDATE);
         // Step.07(初始化流程) 設定清單配置器
         this.l.setAdapter(this.ListAdapter);
-///////////////////////////////////////////////////////////////////////////////////
+
+
+        spinner = (Spinner)findViewById(R.id.spinner);
+        final String[] lunch = {"Select","Nike", "Adidas", "Puma", "NTUST", "APPLE","COSTCO","康是美","uniqlo","PChome","shopee","遠傳","床的世界","定食8","百分百文具店","小米電器","王品牛排","萵苣健身房"};
+        ArrayAdapter<String> lunchList = new ArrayAdapter<>(MainActivity.this,
+                android.R.layout.simple_spinner_dropdown_item,
+                lunch);spinner.setAdapter(lunchList);
+        pointer = (ImageView)findViewById(R.id.pointer);
+
+
         frame_1 = new FrameLayout(this);
         frame_1 = (FrameLayout)findViewById(R.id.floor1_frame);
 
@@ -200,8 +217,8 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
         mark_state = new TextView(this);
 
         frame_2.addView(mark_state);
-        mark_state.setTextColor(getResources().getColor(android.R.color.holo_blue_light));
-
+        //mark_state.setTextColor(getResources().getColor(android.R.color.holo_blue_light));
+        mark_state.setTextColor(Color.rgb(200,240, 230));   //設定跑馬燈文字顏色
         display_mark_btn(beacon_amount,mark_position_X,mark_position_Y,img_btn_mark,frame_1,this);
 
 
@@ -223,12 +240,10 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                 if (toggle_btn_1.isChecked()) {
                     my_floor = 1;
                     toggle_btn_2.setChecked(false);
-                    Toast.makeText(MainActivity.this, "選擇樓層1", Toast.LENGTH_SHORT).show();
                 }
                 // 當按鈕再次被點擊時候響應的事件
                 else {
                     toggle_btn_1.setChecked(true);
-                    Toast.makeText(MainActivity.this, "取消選擇樓層1", Toast.LENGTH_SHORT).show();
                 }
             }
         });
@@ -239,38 +254,222 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                 if (toggle_btn_2.isChecked()) {
                     my_floor = 2;
                     toggle_btn_1.setChecked(false);
-                    Toast.makeText(MainActivity.this, "選擇樓層2", Toast.LENGTH_SHORT).show();
                     intent_1.setClass(MainActivity.this, Floor_choosen.class);
                     startActivity(intent_1);
                 }
                 // 當按鈕再次被點擊時候響應的事件
                 else {
-                    Toast.makeText(MainActivity.this, "取消選擇樓層2", Toast.LENGTH_SHORT).show();
+
                 }
             }
         });
 
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                //Toast.makeText(MainActivity.this, "進來了", Toast.LENGTH_SHORT).show();
+                Log.v("gps4", String.valueOf(position));
+                if(user_place < 11 && position>0 && position<12) {  //目的地跟位置都在1樓
+                    gps=1;
+                    gps_position=position;
+                    Log.v("gps4", String.valueOf(gps));
+                    Log.v("gps4", String.valueOf(gps_position));
 
+                    //圖標重至
+                    for(int i = 0;i < beacon_amount;i++) {
+                        if (flag_mark_btn[i] == true && flag_mark_btn2[i] == true) {
+                            change_mark(i,2,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == true && flag_mark_btn2[i] == false){
+                            change_mark(i,1,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == false && flag_mark_btn2[i] == true){
+                            change_mark(i,3,img_btn_mark);
+                        }
+                        else {
+                            change_mark(i, 0,img_btn_mark);
+                        }
+                    }
+                    //確保user_place
+                    change_mark(user_place,1,img_btn_mark);
+                    //畫路徑
+                    //user_place > position
+                    if ( ( user_place - (position - 1) ) > 0) {
+                        //順著走
+                        if( ( user_place - (position - 1) ) < 6){
+                            for (int i = position ; i < user_place; i++) {
+                                change_mark(i, 3, img_btn_mark);
+                            }
+                            change_mark(position - 1, 4, img_btn_mark);
+                            change_mark(user_place, 1, img_btn_mark);
+                        }
+                        //往樓梯繞
+                        else if ( ( user_place - (position - 1) ) < 11 ) {
+                            for (int i = 0; i < position-1 ; i++) {
+                                change_mark(i, 3, img_btn_mark);
+                            }
+                            for (int i =10; i > user_place ; i--) {
+                                change_mark(i, 3, img_btn_mark);
+                            }
+                            change_mark(position - 1, 4, img_btn_mark);
+                            change_mark(user_place, 1, img_btn_mark);
+                        }
+                        else {
+                        }
+                        pointer.setVisibility(View.INVISIBLE);
+                    }
+                    //user_place < position
+                    else if ( ( user_place - (position - 1) ) < 0) {
+                        //順著走
+                        if( ( user_place - (position - 1) ) > -6){
+                            for (int i = position-2 ; i > user_place; i--) {
+                                change_mark(i, 3, img_btn_mark);
+                            }
+                            change_mark(position - 1, 4, img_btn_mark);
+                            change_mark(user_place, 1, img_btn_mark);
+                        }
+                        //往樓梯繞
+                        else if ( ( user_place - (position - 1) ) > -11 ) {
+                            for (int i = 0; i < user_place ; i++) {
+                                change_mark(i, 3, img_btn_mark);
+                            }
+                            for (int i =10; i > position-1 ; i--) {
+                                change_mark(i, 3, img_btn_mark);
+                            }
+                            change_mark(position - 1, 4, img_btn_mark);
+                            change_mark(user_place, 1, img_btn_mark);
+                        }
+                        else {
+                        }
+                    }
+                    else {  //本來就在目的地
+                        Toast.makeText(MainActivity.this, "您已在" + lunch[position], Toast.LENGTH_SHORT).show();
+                        gps=0;
+                        gps_position=20;
 
-
-///////////////////////////////////////////////////////////////////////////////////
+                    }
+                    pointer.setVisibility(View.INVISIBLE);
+                }
+                else if(user_place<20 && position==0){
+                    if(first_time==0) {
+                        gps = 0;
+                        gps_position = 20;
+                        for (int i = 0; i < beacon_amount; i++) {
+                            if (flag_mark_btn[i] == true && flag_mark_btn2[i] == true) {
+                                change_mark(i, 2, img_btn_mark);
+                            } else if (flag_mark_btn[i] == true && flag_mark_btn2[i] == false) {
+                                change_mark(i, 1, img_btn_mark);
+                            } else if (flag_mark_btn[i] == false && flag_mark_btn2[i] == true) {
+                                change_mark(i, 3, img_btn_mark);
+                            } else {
+                                change_mark(i, 0, img_btn_mark);
+                            }
+                        }
+                        change_mark(user_place, 1, img_btn_mark);
+                    }
+                    else{
+                        first_time=0;
+                        first_initial();
+                        //change_mark(user_place, 1, img_btn_mark);
+                    }
+                    pointer.setVisibility(View.INVISIBLE);
+                }
+                else{
+                    if(position>0){
+                        gps=1;
+                        gps_position=position;
+                    }
+                    pointer.setVisibility(View.INVISIBLE);
+                }
+                if(user_place<11 && position>11){   //目的地在2樓 位置在1樓
+                    gps=1;
+                    gps_position=position;
+                    //圖標重至
+                    for(int i = 0;i < beacon_amount;i++) {
+                        if (flag_mark_btn[i] == true && flag_mark_btn2[i] == true) {
+                            change_mark(i,2,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == true && flag_mark_btn2[i] == false){
+                            change_mark(i,1,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == false && flag_mark_btn2[i] == true){
+                            change_mark(i,3,img_btn_mark);
+                        }
+                        else {
+                            change_mark(i, 0,img_btn_mark);
+                        }
+                    }
+                    //確保user_place
+                    change_mark(user_place,1,img_btn_mark);
+                    if(user_place>5){
+                        for(int i=10;i>user_place;i--){
+                            change_mark(i, 3, img_btn_mark);
+                        }
+                    }
+                    else{
+                        for(int i=0;i<user_place;i++){
+                            change_mark(i, 3, img_btn_mark);
+                        }
+                    }
+                    Toast.makeText(MainActivity.this, "請往樓梯走" , Toast.LENGTH_SHORT).show();
+                    pointer.setVisibility(View.VISIBLE);
+                }
+                if(user_place>=11 && position<=11 && user_place<20){   //目的地在1樓 位置在2樓
+                    gps=1;
+                    gps_position=position;
+                    //圖標重至
+                    for(int i = 0;i < beacon_amount;i++) {
+                        if (flag_mark_btn[i] == true && flag_mark_btn2[i] == true) {
+                            change_mark(i,2,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == true && flag_mark_btn2[i] == false){
+                            change_mark(i,1,img_btn_mark);
+                        }
+                        else if(flag_mark_btn[i] == false && flag_mark_btn2[i] == true){
+                            change_mark(i,3,img_btn_mark);
+                        }
+                        else {
+                            change_mark(i, 0,img_btn_mark);
+                        }
+                    }
+                    //確保user_place
+                    //change_mark(user_place,1,img_btn_mark);
+                    if(position>6){
+                        for(int i=10;i>position-1;i--){
+                            change_mark(i, 3, img_btn_mark);
+                        }
+                    }
+                    else{
+                        for(int i=0;i<position-1;i++){
+                            change_mark(i, 3, img_btn_mark);
+                        }
+                    }
+                    //change_mark(position-1,1,img_btn_mark);
+                    change_mark(position,1,img_btn_mark);
+                    Toast.makeText(MainActivity.this, "請往樓梯走" , Toast.LENGTH_SHORT).show();
+                    pointer.setVisibility(View.VISIBLE);
+                }
+            }
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {}
+        });
     }
-
 
     public static MainActivity getInstance() {
         return instance;
     }
-
-
-
-
     ///////////////////////////////////////////////////////////////////////////////////測試
+
+
     //TODO Beacon編號對應
     public static int correspod_beacon(int major,int minor){
         beacon_in = (major * 10) + minor;
         int num;
         for(num = 0;num < beacon_amount_total;num++){
             if(beacon_in == beacon_num[num]) break;
+        }
+        if (num == beacon_amount_total){
+            num = beacon_amount_total - 1;
         }
         return num;
     }
@@ -283,7 +482,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
             btn_1_flag = !btn_1_flag;
             if(btn_1_flag == true){
                 btn_1.setVisibility(View.VISIBLE);
-                btn_2.setVisibility(View.VISIBLE);
+                //btn_2.setVisibility(View.VISIBLE);
                 btn_3.setVisibility(View.VISIBLE);
             }else{
                 btn_1.setVisibility(View.INVISIBLE);
@@ -395,9 +594,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                         web_info[i] = info;
                         result = info;
                     }
-                   // result = "***";
                     mark_state.setText(result); // 更改顯示文字
-
                 }
                 // 讀取輸入串流並存到字串的部分
                 // 取得資料後想用不同的格式
@@ -581,7 +778,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
             public void onClick(View view) {
                 if(btn_2_flag){
                     flag_2[a] = !flag_2[a];
-                    if(flag_2[a] == true){
+                    if(flag_2[a] == true /*&& gps==0*/){
                         for(int i = 0;i < beacon_amount;i++) {
                             flag_2[i] = false;
                             if(flag_1[i] == true){
@@ -593,10 +790,31 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                         }
                         flag_2[a] = true;
                         change_mark(a,3,mark);
-                        Toast.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
+                        //確保user_place
+                        change_mark(user_place,1,mark);
+                        //畫路徑
+                        if (user_place < (gps_position - 1)) {
+                            change_mark(gps_position - 1, 4, mark);
+                            for (int i = user_place + 1; i < gps_position - 1; i++) {
+                                change_mark(i, 3, mark);
+                            }
+                        }
+                        else if (user_place > (gps_position - 1)) {
+                            change_mark(gps_position - 1, 4, mark);
+                            for (int i = gps_position; i < user_place; i++) {
+                                change_mark(i, 3, mark);
+                            }
+                        }
+                        else {
+                            //Toast.makeText(MainActivity.this, "您已在" + lunch[position], Toast.LENGTH_SHORT).show();
+                        }
+                        //Toast.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
                     }
                     else{
                         change_mark(a,0,mark);
+                        /*if(gps==0){
+
+                        }*/
                         for(int i = 0;i < beacon_amount;i++) {
                             flag_2[i] = false;
                             if (flag_1[i] == true) {
@@ -609,7 +827,6 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                     }
                 }
                 else if(btn_3_flag){
-
                     flag_3[a] = !flag_3[a];
                     if(flag_3[a] == true){
                         for(int i = 0;i < beacon_amount;i++) {
@@ -629,7 +846,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                         }
                         flag_3[a] = true;
                         change_mark(a,4,mark);
-                        Toast.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
+                        //Toast.makeText(context,"number " + a, Toast.LENGTH_SHORT).show();
                     }else{
                         for(int i = 0;i < beacon_amount;i++) {
                             flag_3[i]=false;
@@ -646,7 +863,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                     }
 
                 }else if(!btn_2_flag && !btn_3_flag){
-                    Toast.makeText(context,"number ==== " + a, Toast.LENGTH_SHORT).show();
+
                 }
 
             }
@@ -657,24 +874,19 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
         // TODO 方法：選擇第X個 改變圖標 0:黑色 1:紅色
         switch(state){
             case 0:
-                //Log.v("s_h_b", String.valueOf(mark[x].getLayoutParams().height));
                 mark[x].getLayoutParams().height = 65;
                 mark[x].getLayoutParams().width = 65;
                 mark[x].setImageResource(R.drawable.map_mark);
-                Log.v("e_h_b", String.valueOf(mark[x].getLayoutParams().height));
                 break;
             case 1:
-                Log.v("s_h_r", String.valueOf(mark[x].getLayoutParams().height));
                 mark[x].getLayoutParams().height = 65;
                 mark[x].getLayoutParams().width = 65;
                 mark[x].setImageResource(R.drawable.red_map_mark);
-                Log.v("e_h_r", String.valueOf(mark[x].getLayoutParams().height));
                 //mark_state.setText(web_info[x]);
                 /*if(poumadon == 0){
                     //result = web_info[x];
                     //mark_state.setText(result);
                     mark_state.setText(web_info[a]);
-                    Log.v("pouma", String.valueOf(a));
                     //mark_state.setText(web_info[x+11]);
                 }*/
                 break;
@@ -723,7 +935,12 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                     flag_stable_state[user_place] = 0;
                     if(correspod_beacon(major, minor) < beacon_amount){    //人在一樓
                         if(!flag_mark_btn2[user_place] && !flag_mark_btn3[user_place] /*&& (user_place<beacon_amount)*/){
-                            if(user_place<beacon_amount)change_mark(user_place, 0,img_btn_mark);           //把原本位置圖片重製
+                            if(gps==1){
+                                change_mark_gps(correspod_beacon(major, minor));
+                            }
+                            else {
+                                if(user_place<beacon_amount)change_mark(user_place, 0,img_btn_mark);           //把原本位置圖片重製
+                            }
                         }
                         flag_mark_btn[user_place] = false;                                         //把flag原先位置重置
                         user_place = correspod_beacon(major, minor);                              //把原先位置重置
@@ -736,7 +953,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                     }
                     //else if(correspod_beacon(major, minor) >= beacon_amount){      //人在二樓
                     else{
-                        Log.v("floor0", "人在爾樓");//跑馬燈更新
+                        Log.v("floor0", "人在二樓");//跑馬燈更新
                         flag_mark_btn[user_place] = false;                                         //把flag原先位置重置
                         if(!flag_mark_btn2[user_place] && !flag_mark_btn3[user_place]/* && (user_place<beacon_amount)*/ ){
                             if(user_place<beacon_amount)change_mark(user_place, 0,img_btn_mark);           //把原本位置圖片重製
@@ -778,11 +995,9 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
                 }
             }
         }else{
-            //flag_stable_state[correspod_beacon(major, minor)] = flag_stable_state[correspod_beacon(major, minor)] * 2;
             flag_stable_state[correspod_beacon(major, minor)] *= 2;
             //if( flag_stable_state[correspod_beacon(major, minor)] == 0 && !flag_mark_btn2[correspod_beacon(major, minor)] && !flag_mark_btn3[correspod_beacon(major, minor)]) change_mark(correspod_beacon(major, minor),0,img_btn_mark);
         }
-        Log.v("floor0", String.valueOf(poumadon));//跑馬燈更新
     //Floor_choosen.user_place = user_place;
     }
 
@@ -838,9 +1053,8 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
             if((System.currentTimeMillis() - beacon.lastUpdate) > Setup.TIME_BEACON_TIMEOUT){
                 // Step.02(更新裝置背景執行流程) 移除清單
                 //////////////////////////////////////////////////////////////////////////////////////
-                //change_mark(correspod_beacon(beacon.major,beacon.minor),0);
+
                 flag_stable_state[correspod_beacon(beacon.major,beacon.minor)] -= 1;
-                //choose_one = 0;
                 flag_mark_btn[correspod_beacon(beacon.major,beacon.minor)] = false;
                 /////////////////////////////////////////////////////////////////////////////////////
                 this.beacons.remove(i);
@@ -854,16 +1068,14 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
         for(ScannedBeacon beacon : this.beacons){
             // Step.03(更新裝置背景執行流程) 重新新增項目
             ListItem item = new ListItem();
-
             item.setText1(String.valueOf(beacon.beaconUuid));
             item.setText2(String.valueOf(beacon.major));
             item.setText3(String.valueOf(beacon.minor));
             item.setText4(String.valueOf(beacon.rssi));
             item.setText5(String.valueOf(beacon.batteryPower));
 
-            //////////////////////////////////////////////
-            beacon_state(beacon.major,beacon.minor,beacon.rssi);
-            //////////////////////////////////////////////
+
+            beacon_state(beacon.major,beacon.minor,beacon.rssi);    //查看與Beacon device距離
 
             this.ListAdapter.addItem(item);
         }
@@ -949,7 +1161,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
 
         if (flag[Integer.parseInt(num)] == false){
             if (distance > -upper){
-                myVibrator();
+                //myVibrator();
                 flag[Integer.parseInt(num)] = true;
                 NM.notify(Integer.parseInt(num), notification(num, callback()));
 
@@ -977,8 +1189,8 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
         Notification notification = new Notification.Builder(this)
 
                 .setSmallIcon(R.drawable.ntust)
-                .setContentTitle("MIT LAB beacon " + num)
-                .setContentText("MIT LAB beacon " + num)
+                .setContentTitle("店家編號： " + num)
+                .setContentText("店家編號： " + num)
                 .setContentIntent(callback)
                 .build();
 
@@ -988,7 +1200,7 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
     //TODO 方法：震動
     public void myVibrator() {
         Vibrator myVibrator = (Vibrator) getSystemService(Service.VIBRATOR_SERVICE);
-        myVibrator.vibrate(100);
+        myVibrator.vibrate(20);
     }
 
     static class DrawView extends View {
@@ -1019,4 +1231,154 @@ public class MainActivity extends Activity implements iBeaconScanManager.OniBeac
             canvas.drawLine(60, 30, 80, 30, p);
         }
     }
+    public void first_initial(){
+        if(user_place<11 && gps_position>0 && gps_position<12 && gps==1) {  //目的地跟位置都在1樓
+            //畫路徑
+            //user_place > gps_position
+            if ( ( user_place - (gps_position - 1) ) > 0) {
+                if( ( user_place - (gps_position - 1) ) < 6){
+                    for (int i = gps_position ; i < user_place; i++) {
+                        change_mark(i, 3, img_btn_mark);
+                    }
+                    change_mark(gps_position - 1, 4, img_btn_mark);
+                    change_mark(user_place, 1, img_btn_mark);
+                }
+                //往樓梯繞
+                else if ( ( user_place - (gps_position - 1) ) < 11 ) {
+                    for (int i = 0; i < gps_position-1 ; i++) {
+                        change_mark(i, 3, img_btn_mark);
+                    }
+                    for (int i =10; i > user_place ; i--) {
+                        change_mark(i, 3, img_btn_mark);
+                    }
+                    change_mark(gps_position - 1, 4, img_btn_mark);
+                    change_mark(user_place, 1, img_btn_mark);
+                }
+                else {
+                }
+            }
+            //user_place < gps_position
+            else if ( ( user_place - (gps_position - 1) ) < 0) {
+                //順著走
+                if( ( user_place - (gps_position - 1) ) > -6){
+                    for (int i = gps_position-2 ; i > user_place; i--) {
+                        change_mark(i, 3, img_btn_mark);
+                    }
+                    change_mark(gps_position - 1, 4, img_btn_mark);
+                    change_mark(user_place, 1, img_btn_mark);
+                }
+                //往樓梯繞
+                else if ( ( user_place - (gps_position - 1) ) > -11 ) {
+                    for (int i = 0; i < user_place ; i++) {
+                        change_mark(i, 3, img_btn_mark);
+                    }
+                    for (int i =10; i > gps_position-1 ; i--) {
+                        change_mark(i, 3, img_btn_mark);
+                    }
+                    change_mark(gps_position - 1, 4, img_btn_mark);
+                    change_mark(user_place, 1, img_btn_mark);
+                }
+                else {
+                }
+            }
+            else {  //本來就在目的地
+
+            }
+        }
+        else{ }
+        if(user_place<11 && gps_position>11 && gps==1){   //目的地在2樓 位置在1樓
+            if(user_place>5){
+                for(int i=10;i>user_place;i--){
+                    change_mark(i, 3, img_btn_mark);
+                }
+            }
+            else{
+                for(int i=0;i<user_place;i++){
+                    change_mark(i, 3, img_btn_mark);
+                }
+            }
+            Toast.makeText(MainActivity.this, "請往樓梯走" , Toast.LENGTH_SHORT).show();
+            //*************************************
+            //請恆紹加往樓梯的箭頭
+            //************************************
+        }
+        if(user_place>=11 && gps_position<=11 && user_place<20 && gps==1){   //目的地在1樓 位置在2樓
+            if(gps_position>6){
+                for(int i=10;i>gps_position-1;i--){
+                    change_mark(i, 3, img_btn_mark);
+                }
+            }
+            else{
+                for(int i=0;i<gps_position-1;i++){
+                    change_mark(i, 3, img_btn_mark);
+                }
+            }
+            //change_mark(gps_position-1,1,img_btn_mark);
+            change_mark(gps_position,1,img_btn_mark);
+            Toast.makeText(MainActivity.this, "請往樓梯走" , Toast.LENGTH_SHORT).show();
+            //*************************************
+            //請恆紹加往樓梯的箭頭
+            //************************************
+        }
+    }
+    public void change_mark_gps(int new_user_place){
+        if ( ( user_place - (gps_position - 1) ) > 0) {
+            //順著走
+            if( ( user_place - (gps_position - 1) ) < 6){
+                if( user_place < new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    change_mark(user_place, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    change_mark(user_place, 0,img_btn_mark);
+                }
+            }
+            //往樓梯繞
+            else if ( ( user_place - (gps_position - 1) ) < 11 ) {
+                if( user_place > new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    change_mark(user_place, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    change_mark(user_place, 0,img_btn_mark);
+                }
+            }
+            else {
+            }
+        }
+        //user_place < position
+        else if ( ( user_place - (gps_position - 1) ) < 0) {
+            //順著走
+            if( ( user_place - (gps_position - 1) ) > -6){
+                if( user_place > new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    change_mark(user_place, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    change_mark(user_place, 0,img_btn_mark);
+                }
+            }
+            //往樓梯繞
+            else if ( ( user_place - (gps_position - 1) ) > -11 ) {
+                if( user_place < new_user_place ){
+                    Toast.makeText(this,"您走反了" , Toast.LENGTH_SHORT).show();
+                    change_mark(user_place, 3,img_btn_mark);
+                }
+                else{  //走對方向
+                    change_mark(user_place, 0,img_btn_mark);
+                }
+            }
+            else {
+                if(user_place==1 && new_user_place==0)change_mark(1, 0,img_btn_mark);
+            }
+        }
+        else if(user_place == (gps_position-1)){  //本來就在目的地
+            //Toast.makeText(MainActivity.this, "您已在" + lunch[gps_position], Toast.LENGTH_SHORT).show();
+            gps=0;
+            gps_position=20;
+        }
+        else{
+        }
+    }
+
 }
